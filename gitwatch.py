@@ -132,7 +132,7 @@ class user:
       thists=int(datetime.strptime(i['created_at'],"%Y-%m-%dT%H:%M:%SZ").strftime("%s"))
 
       # if this item happened before the last update for this user, dont bother with it
-      if thists<self.lastts: 
+      if thists<=self.lastts: 
         logging.debug("Skipping %s on %s since time %d is behind %d" % (
           i['type'],i['repo']['name'],thists,self.lastts))
         continue
