@@ -7,6 +7,7 @@ import MySQLdb
 import logging
 import sys
 import ConfigParser
+from datetime import datetime
 
 #TODO: add cmdline parser for -c
 configfile="gitwatch.conf"
@@ -72,8 +73,9 @@ class user:
   def __init__(self,username):
     self.username=username
     self.etag=None
-    
-    logging.warn("Added user %s" % username)
+    self.lastts=int(datetime.utcnow().strftime("%s"))    
+
+    logging.info("Added user %s" % username)
   def update(self):
     logging.debug("Updating %s" % self.username)
 
@@ -81,9 +83,6 @@ class user:
     headers={'User-Agent':useragent}
     if self.etag is not None:
       headers['If-None-Match']=self.etag
-      firstupdate=False
-    else:
-      firstupdate=True
 
     req=urllib2.Request(url,None,headers)
     
@@ -93,11 +92,11 @@ class user:
       if str(e)=='HTTP Error 304: Not Modified':
         logging.debug("304: Nothing new for %s" % self.username)
       else:
-        logging.error("--- HTTP Error: %s" % e)
+        logging.error("HTTP Error on %s: %s" % (self.username,e))
 
       return
     except Exception, e:
-      logging.error("!!! Other error fetching api: %s" % e)
+      logging.error("Error fetching api for %s: %s" % (self.username,e))
       return
 
     self.etag=resp.headers.getheader('etag')
@@ -113,26 +112,34 @@ class user:
     if sleepinterval!=potentialival:
       logging.warn("Changing sleep interval from %d to %d." % (
         sleepinterval,potentialival))
-      setsleepint(potentialival)
+      setsleepint(potentialival) # see note on func about scope
 
     if 0==int(resp.headers.getheader('x-ratelimit-remaining')):
       logging.error("API ratelimit exceeded!")
-
-    # we just nab the etags on the first update, so as not to 
-    # flood the chan with a page of past events
-    if firstupdate:
-      return
 
     data=resp.read()
     try:
       items=json.loads(data)
     except Exception, e:
-      logging.error("!!! Error parsing json: %s" % e)
+      logging.error("Error parsing json for %s: %s" % (self.username,e))
       return
 
     logging.debug("%d items returned for %s" % (len(items),self.username))
 
+    # ts is used to determine new events, since etags only trigger a paginated return
+    maxts=self.lastts
     for i in items:
+      thists=int(datetime.strptime(i['created_at'],"%Y-%m-%dT%H:%M:%SZ").strftime("%s"))
+
+      # if this item happened before the last update for this user, dont bother with it
+      if thists<self.lastts: 
+        logging.debug("Skipping %s on %s since time %d is behind %d" % (
+          i['type'],i['repo']['name'],thists,self.lastts))
+        continue
+
+      # items dont always arrive in time order, so we have to set this after iteration
+      if thists>maxts: maxts=thists 
+
       if i['type']=='PushEvent':
         if i['payload'].has_key('commits'):
           for c in i['payload']['commits']: 
@@ -193,6 +200,8 @@ class user:
       # about are covered)
       else:
         logging.warn("Unimplemented EventType to %s: %s" % (i['repo']['name'],i['type']))
+
+    self.lastts=maxts
 
 # the current IRC bot we use nabs from a db table queue via http api, but really
 # should be moved to zmq.
