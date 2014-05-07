@@ -1,0 +1,25 @@
+[api]
+urlproto = https://api.github.com/users/:user/events
+useragent = jackcarrozzo-gitwatch # per apiv3 reqs 
+defaultinterval = 120 
+
+[logging]
+filename = events.log
+fileloglevel = WARN
+consoleloglevel = INFO 
+
+[database]
+dbhost = localhost
+dbuser = gitwatch
+dbpass = setThisPassword
+dbname = commqueues
+
+[irc]
+channel = gitevents
+maxlinelen = 445
+
+[users] # only 'ALL' EventType implemented currently
+jackcarrozzo = ALL
+gmorell = ALL
+eastein = ALL
+wcummings = ALL
