@@ -57,7 +57,7 @@ try:
 
   ircchan=p.get("irc","channel").replace('#','') # remove '#' if present
   ircchan=MySQLdb.escape_string(ircchan)
-  maxlinelen=p.get("irc","maxlinelen")
+  maxlinelen=int(p.get("irc","maxlinelen"))
 except ConfigParser.Error, e: 
   logging.critical("Error parsing %s: %s" % (configfile,e))
   sys.exit(1)
