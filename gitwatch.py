@@ -210,7 +210,11 @@ def sendmessage(msg):
 
   # we throw away non-ascii chars since the ircd doesnt like them. if yours handles
   # unicode properly, you can remove this
-  msg=msg.decode('ascii','ignore') 
+  try:
+    msg=msg.decode('ascii','ignore') 
+  except Exception, e:
+    logging.error('Caught illegal char issue, dropping message!')
+    return
 
   sql="INSERT INTO irc_sendq(ts,sent,channel,txt) VALUES "
   sql+="(UNIX_TIMESTAMP(),0,'%s','%s')" % (ircchan,MySQLdb.escape_string(msg))
