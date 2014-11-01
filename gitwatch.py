@@ -159,7 +159,7 @@ class user:
       elif i['type']=='IssueCommentEvent':
         buf="Comment on %s by %s:" % (i['repo']['name'],i['actor']['login'])
         bodylen=maxlinelen-(len(buf)+len(i['payload']['issue']['html_url'])+4)
-        body=i['payload']['issue']['body'];
+        body=i['payload']['comment']['body'];
         body=body.replace('\r','')
         body=body.replace('\n',' ')
         body=body.replace('![image]','')
