@@ -192,7 +192,8 @@ class user:
           i['actor']['login'],i['repo']['name']))
 
       elif i['type']=='WatchEvent':
-        sendmessage("%s is now watching %s" % (i['actor']['login'],i['repo']['name']))
+        # this is actually starring https://developer.github.com/changes/2012-09-05-watcher-api/
+        sendmessage("%s starred %s" % (i['actor']['login'],i['repo']['name']))
 
       # there are several other EventTypes that I haven't implemented here,
       # see https://developer.github.com/v3/activity/events/types/
