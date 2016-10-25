@@ -195,6 +195,35 @@ class user:
         # this is actually starring https://developer.github.com/changes/2012-09-05-watcher-api/
         sendmessage("%s starred %s" % (i['actor']['login'],i['repo']['name']))
 
+      elif i['type']=='PullRequestEvent':
+        buf="%s %s PR #%d on %s:" % (
+          i['actor']['login'], i['payload']['action'], i['payload']['number'], i['repo']['name'])
+        bodylen=maxlinelen-(len(buf)+len(i['payload']['pull_request']['url'])+4)
+        body=i['payload']['pull_request']['title'];
+        body=body.replace('\r','')
+        body=body.replace('\n',' ')
+        body=body.replace('![image]','')
+
+        if bodylen<len(body):
+          body="%s..." % body[:bodylen-3]        
+
+        sendmessage("%s %s (%s)" % (buf,body,i['payload']['pull_request']['url']))
+
+      elif i['type']=='PullRequestReviewCommentEvent':
+        buf="%s commented on %s PR #%d:" % (
+          i['actor']['login'], i['repo']['name'], i['payload']['pull_request']['number'])
+        bodylen=maxlinelen-(len(buf)+len(i['payload']['comment']['url'])+4)
+        body=i['payload']['comment']['body'];
+        body=body.replace('\r','')
+        body=body.replace('\n',' ')
+        body=body.replace('![image]','')
+
+        if bodylen<len(body):
+          body="%s..." % body[:bodylen-3]
+
+        sendmessage("%s %s (%s)" % (buf,body,i['payload']['comment']['url']))
+
+
       # there are several other EventTypes that I haven't implemented here,
       # see https://developer.github.com/v3/activity/events/types/
       # (may do them in the future if there's need, but the ones we care most
